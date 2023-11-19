@@ -22,7 +22,7 @@
 
 from pid import PIDAgent
 from keyframes import hello
-
+import numpy as np
 
 class AngleInterpolationAgent(PIDAgent):
     def __init__(self, simspark_ip='localhost',
@@ -32,17 +32,41 @@ class AngleInterpolationAgent(PIDAgent):
                  sync_mode=True):
         super(AngleInterpolationAgent, self).__init__(simspark_ip, simspark_port, teamname, player_id, sync_mode)
         self.keyframes = ([], [], [])
+        self.timerToZero = True
+        self.startTime = 0
 
     def think(self, perception):
         target_joints = self.angle_interpolation(self.keyframes, perception)
-        target_joints['RHipYawPitch'] = target_joints['LHipYawPitch'] # copy missing joint in keyframes
         self.target_joints.update(target_joints)
         return super(AngleInterpolationAgent, self).think(perception)
 
     def angle_interpolation(self, keyframes, perception):
         target_joints = {}
-        # YOUR CODE HERE
+        names, times, keys = keyframes
+        if(self.timerToZero):
+            self.startTime = perception.time
+            self.timerToZero = False
+        timer = perception.time - self.startTime
 
+        for index, joint in enumerate(names):
+            jointTimes = times[index]
+            jointKeys = keys[index]
+            for timeIndex in range(len(jointTimes)-1):
+                keyframeStartTime = jointTimes[timeIndex]
+                keyframeEndTime = jointTimes[timeIndex + 1]
+                if (keyframeStartTime < timer < keyframeEndTime):
+                    keyframeDuration = keyframeEndTime - keyframeStartTime
+                    t = (timer - keyframeStartTime) / keyframeDuration
+                    P0 = jointKeys[timeIndex][0] 
+                    P1 = jointKeys[timeIndex][1][2]  
+                    P2 = jointKeys[timeIndex][2][2]  
+                    P3 = jointKeys[timeIndex+1][0]     
+                    #formula from https://www.youtube.com/watch?v=pnYccz1Ha34
+                    bezier = (1-t)**3 * P0 + 3*(1-t)**2 * t * P1 + 3*(1-t)*t**2 * P2 + t**3 * P3
+                    target_joints[joint] = bezier
+                    print(bezier)
+                    if joint == 'LHipYawPitch':
+                        target_joints['RHipYawPitch'] = target_joints['LHipYawPitch']
         return target_joints
 
 if __name__ == '__main__':
