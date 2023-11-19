@@ -21,7 +21,7 @@
 
 
 from pid import PIDAgent
-from keyframes import hello
+from keyframes import *
 import numpy as np
 
 class AngleInterpolationAgent(PIDAgent):
@@ -58,18 +58,18 @@ class AngleInterpolationAgent(PIDAgent):
                     keyframeDuration = keyframeEndTime - keyframeStartTime
                     t = (timer - keyframeStartTime) / keyframeDuration
                     P0 = jointKeys[timeIndex][0] 
-                    P1 = jointKeys[timeIndex][1][2]  
-                    P2 = jointKeys[timeIndex][2][2]  
+                    #after testing out the other keyframe test I found out that we apparently need to add P0 for it to work
+                    P1 = P0+jointKeys[timeIndex][1][2] 
+                    P2 = P0+jointKeys[timeIndex][2][2]  
                     P3 = jointKeys[timeIndex+1][0]     
                     #formula from https://www.youtube.com/watch?v=pnYccz1Ha34
                     bezier = (1-t)**3 * P0 + 3*(1-t)**2 * t * P1 + 3*(1-t)*t**2 * P2 + t**3 * P3
                     target_joints[joint] = bezier
-                    print(bezier)
                     if joint == 'LHipYawPitch':
                         target_joints['RHipYawPitch'] = target_joints['LHipYawPitch']
         return target_joints
 
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()
-    agent.keyframes = hello()  # CHANGE DIFFERENT KEYFRAMES
+    agent.keyframes = leftBackToStand()  # CHANGE DIFFERENT KEYFRAMES
     agent.run()
