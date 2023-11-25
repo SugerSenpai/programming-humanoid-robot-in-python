@@ -116,12 +116,7 @@ class ForwardKinematicsAgent(PostureRecognitionAgent):
         ]:
             rotationMatrix = np.array(
                 [
-                    [
-                        np.cos(joint_angle),
-                        -np.sin(joint_angle),
-                        0,
-                        0,
-                    ],
+                    [np.cos(joint_angle), -np.sin(joint_angle), 0, 0],
                     [np.sin(joint_angle), np.cos(joint_angle), 0, 0],
                     [0, 0, 1, 0],
                     [0, 0, 0, 1],
